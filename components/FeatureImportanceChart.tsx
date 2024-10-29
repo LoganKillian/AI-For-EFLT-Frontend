@@ -4,42 +4,71 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
+interface FeatureImportanceData {
+  feature: string;
+  importance?: number;
+  Coefficients?: number;
+}
+
 interface FeatureImportanceChartProps {
-  data: { feature: string; importance: number }[];
+  data: FeatureImportanceData[];
 }
 
 const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data }) => {
+  if (!data || data.length === 0) {
+    return <div>No feature importance data available</div>;
+  }
+
+  // Normalize the data structure to handle both Lasso and reverse tuning responses
+  const normalizedData = data.map(item => ({
+    feature: item.feature,
+    importance: item.importance || Math.abs(item.Coefficients || 0) // Use importance if available, otherwise use absolute Coefficients
+  }));
+
+  // Sort by importance in descending order
+  const sortedData = normalizedData.sort((a, b) => b.importance - a.importance);
+
   const chartData = {
-    labels: data.map(item => item.feature),
+    labels: sortedData.map(item => item.feature),
     datasets: [
       {
         label: 'Feature Importance',
-        data: data.map(item => item.importance),
-        backgroundColor: data.map(item => item.importance >= 0 ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 99, 132, 0.6)'),
+        data: sortedData.map(item => item.importance),
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
       },
     ],
   };
 
   const options = {
     indexAxis: 'y' as const,
-    elements: {
-      bar: {
-        borderWidth: 2,
-      },
-    },
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top' as const,
+        display: false,
       },
       title: {
         display: true,
         text: 'Feature Importance',
       },
     },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Importance',
+        },
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Features',
+        },
+      },
+    },
   };
 
-  return <Bar data={chartData} options={options} />;
+  return <div style={{ height: '400px' }}><Bar data={chartData} options={options} /></div>;
 };
 
 export default FeatureImportanceChart;

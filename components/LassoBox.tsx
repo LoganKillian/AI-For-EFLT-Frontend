@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 
 interface LassoBoxProps {
   onConfirm: (tolerance: number, alpha: number) => void;
-  onWarning: (tolerance: number, alpha: number) => void;
 }
 
-const LassoBox: React.FC<LassoBoxProps> = ({ onConfirm, onWarning }) => {
+const LassoBox: React.FC<LassoBoxProps> = ({ onConfirm }) => {
   const [tolerance, setTolerance] = useState('');
   const [alpha, setAlpha] = useState('');
 
@@ -13,15 +12,8 @@ const LassoBox: React.FC<LassoBoxProps> = ({ onConfirm, onWarning }) => {
     const toleranceValue = parseFloat(tolerance);
     const alphaValue = parseFloat(alpha);
     
-    if (isValidInput(toleranceValue) && isValidInput(alphaValue)) {
-      onConfirm(toleranceValue, alphaValue);
-    } else {
-      onWarning(toleranceValue, alphaValue);
-    }
-  };
-
-  const isValidInput = (value: number) => {
-    return value >= 0.0001 && value <= 1.0;
+    // Proceed with the values regardless of their range
+    onConfirm(toleranceValue, alphaValue);
   };
 
   return (
@@ -58,12 +50,13 @@ const LassoBox: React.FC<LassoBoxProps> = ({ onConfirm, onWarning }) => {
           onChange={(e) => setAlpha(e.target.value)}
         />
         <p className="text-sm text-gray-600 mt-1">
-          Alpha controls the strength of regularization in the LassoCV model. Higher values increase regularization.
+          Alpha controls the strength of regularization in the LassoCV model. Higher values increase regularization (higher regularization means less features have impact).
         </p>
       </div>
       <button 
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
         onClick={handleConfirm}
+        disabled={!tolerance || !alpha}
       >
         Confirm
       </button>

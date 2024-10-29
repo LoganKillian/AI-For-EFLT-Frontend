@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import LoadModelButton from '../components/LoadModelButton';
 import RefreshButton from '../components/RefreshButton';
-import SelectDistrictBox from '../components/SelectDistrictBox';
 import SelectedDistrictCard from '../components/SelectedDistrictCard';
 import ConfirmButton from '../components/ConfirmButton';
 import DataTable from '../components/DataTable';
@@ -12,13 +12,19 @@ import LassoBox from '../components/LassoBox';
 import FeatureImportanceChart from '../components/FeatureImportanceChart';
 import SaveModelButton from '../components/SaveModelButton';
 import SelectedFeatureCard from '../components/SelectedFeatureCard';
-import SelectFeatureBox from '../components/SelectFeatureBox';
-import ReverseTuneBox from '../components/ReverseTuneBox';
+import MultiSelectDistrictBox from '../components/MultiSelectDistrictBox';
+import MultiSelectFeatureBox from '../components/MultiSelectFeatureBox';
+import MetricsBox from '../components/MetricsBox';
+import TunedDataTable from '../components/TunedDataTable';
+
+//import SelectDistrictBox from '../components/SelectDistrictBox';
+//import SelectFeatureBox from '../components/SelectFeatureBox';
 
 interface SavedModel {
   name: string;
   selectedFeatures: { feature: string; percentage: number }[];
   modelResults: { mae: number; mse: number; r2: number; achievementScore: number };
+  tunedFeatureImportance?: { feature: string; importance: number }[];
 }
 
 export default function Home() {
@@ -26,42 +32,89 @@ export default function Home() {
   const [showTable, setShowTable] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const [showLassoBox, setShowLassoBox] = useState(false);
-  const [showLassoCVWarning, setShowLassoCVWarning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [featureImportance, setFeatureImportance] = useState<{ feature: string; importance: number }[]>([]);
-  const [lassoCVParams, setLassoCVParams] = useState<{ tolerance: number; alpha: number } | null>(null);
-  const [selectedFeatures, setSelectedFeatures] = useState<{ feature: string; percentage: number }[]>([]);
   const [showReverseTune, setShowReverseTune] = useState(false);
-  const [modelResults, setModelResults] = useState<{ mae: number; mse: number; r2: number; achievementScore: number } | null>(null);
-  const [savedModels, setSavedModels] = useState<SavedModel[]>([]);
+  const [savedModels, setSavedModels] = useState([]);
+  const [modelResults, setModelResults] = useState(null);
+  const [lassoResults, setLassoResults] = useState(null);
+  const [allData, setAllData] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRows, setTotalRows] = useState(0);
+  const [tableColumns, setTableColumns] = useState(0);
+  const [availableFeatures, setAvailableFeatures] = useState<string[]>([]);
+  const [selectedFeatures, setSelectedFeatures] = useState<{ feature: string; percentage: number }[]>([]);
+  const [showFeatureSelection, setShowFeatureSelection] = useState(false);
+  const [isReverseTuning, setIsReverseTuning] = useState(false);
+  const [originalData, setOriginalData] = useState<any[]>([]);
+  const [tunedData, setTunedData] = useState<any[]>([]);
+  const [tunedFeatureImportance, setTunedFeatureImportance] = useState<{ feature: string; importance: number }[]>([]);
+  const rowsPerPage = 10;
 
-  // Mock data for demonstration
-  const districts = ['District A', 'District B', 'District C', 'District D'];
-  const mockData = [
-    { id: 1, name: 'School 1', district: 'District A', score: 85 },
-    { id: 2, name: 'School 2', district: 'District B', score: 92 },
-    // ... more mock data
-  ];
+  const [districts, setDistricts] = useState<string[]>([]);
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/districts');
+        setDistricts(response.data.districts);
+      } catch (error) {
+        console.error('Error fetching districts', error);
+      }
+    };
+    fetchDistricts();
+  }, []);
 
-  const handleDistrictSelect = (district: string) => {
-    if (!selectedDistricts.includes(district)) {
-      setSelectedDistricts([...selectedDistricts, district]);
-    }
+  const handleDistrictSelect = (districts: string[]) => {
+    setSelectedDistricts(districts);
   };
 
   const handleDistrictRemove = (district: string) => {
     setSelectedDistricts(selectedDistricts.filter(d => d !== district));
   };
 
-  const handleConfirm = () => {
-    setShowWarning(true);
+  // TODO: RENAME HANDLECONFIRM AND HANDLEWARNINGCONFIRM TO BETTER REFLECT BEHAVIOR
+  const handleConfirm = async () => {
+    // Show warning only if selected districts are between 1 and 5
+    if (selectedDistricts.length >= 1 && selectedDistricts.length <= 5) {
+      setShowWarning(true);
+    } else {
+      // If districts count is 0 or >= 6, proceed directly
+      handleWarningConfirm();
+    }
   };
 
-  const handleWarningConfirm = () => {
+  const handleWarningConfirm = async () => {
     setShowWarning(false);
-    setShowTable(true);
-    setShowLassoBox(true);
+    setIsLoading(true);
+    try {
+      const response = await axios.get('http://localhost:5000/api/filter_data', {
+        params: {
+          district_name: selectedDistricts.length > 0 ? selectedDistricts.join(',') : 'all'
+        }
+      });
+      setAllData(response.data.data);
+      setTableColumns(response.data.columns);
+      setTotalRows(response.data.total_rows);
+      setCurrentPage(1);
+      setShowTable(true);
+      setShowLassoBox(true);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const getCurrentPageData = () => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return allData.slice(startIndex, endIndex);
+  };
+
 
   const handleRefresh = () => {
     setSelectedDistricts([]);
@@ -75,37 +128,48 @@ export default function Home() {
 
   const handleLassoConfirm = async (tolerance: number, alpha: number) => {
     setIsLoading(true);
-    // Simulating API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    // Mock feature importance data
-    const mockFeatureImportance = [
-      { feature: 'Feature A', importance: 0.8 },
-      { feature: 'Feature B', importance: -0.5 },
-      { feature: 'Feature C', importance: 0.3 },
-      { feature: 'Feature D', importance: -0.2 },
-    ];
-    setFeatureImportance(mockFeatureImportance);
-    setIsLoading(false);
-    setShowLassoBox(false);
-    setShowReverseTune(true);
-  };
-
-  const handleLassoWarning = (tolerance: number, alpha: number) => {
-    setLassoCVParams({ tolerance, alpha });
-    setShowLassoCVWarning(true);
-  };
-
-  const handleLassoCVWarningConfirm = () => {
-    setShowLassoCVWarning(false);
-    if (lassoCVParams) {
-      handleLassoConfirm(lassoCVParams.tolerance, lassoCVParams.alpha);
+  
+    try {
+      const response = await axios.post('http://localhost:5000/api/run_lasso', {
+        tolerance,
+        alpha,
+        districts: selectedDistricts
+      });
+  
+      const { metrics, feature_importance, overall_achievement_score } = response.data;
+      console.log('Lasso Response:', response.data);
+  
+      const transformedFeatureImportance = feature_importance.map((item: any) => ({
+        feature: item.feature,
+        importance: Math.abs(item.Coefficients)
+      }))
+      .sort((a: any, b: any) => Math.abs(b.importance) - Math.abs(a.importance));
+  
+      setFeatureImportance(transformedFeatureImportance);
+      setLassoResults({ metrics, overall_achievement_score });  // Store Lasso results separately
+      setModelResults({ metrics, overall_achievement_score });  // Keep this for initial display
+      
+      const featuresResponse = await axios.get('http://localhost:5000/api/get_features');
+      setAvailableFeatures(featuresResponse.data);
+      
+      setShowLassoBox(false);
+      setShowFeatureSelection(true);
+    } catch (error) {
+      console.error("Error running LassoCV:", error);
+      if (error instanceof Error) {
+        console.error("Error details:", error.message);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleFeatureSelect = (feature: string) => {
-    if (!selectedFeatures.find(f => f.feature === feature)) {
-      setSelectedFeatures([...selectedFeatures, { feature, percentage: 0 }]);
-    }
+  const handleFeatureSelect = (features: string[]) => {
+    const newSelectedFeatures = features.map(feature => ({
+      feature,
+      percentage: selectedFeatures.find(f => f.feature === feature)?.percentage || 0
+    }));
+    setSelectedFeatures(newSelectedFeatures);
   };
 
   const handleFeatureRemove = (feature: string) => {
@@ -119,19 +183,29 @@ export default function Home() {
   };
 
   const handleReverseTuneConfirm = async () => {
-    setIsLoading(true);
-    // Simulating API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    // Mock model results
-    const mockResults = {
-      mae: 0.1234,
-      mse: 0.0567,
-      r2: 0.8901,
-      achievementScore: 95.67
-    };
-    setModelResults(mockResults);
-    setIsLoading(false);
+    setIsReverseTuning(true);
+    try {
+      const response = await axios.post('http://localhost:5000/api/adjust_features', {
+        features: Object.fromEntries(selectedFeatures.map(f => [f.feature, f.percentage])),
+        districts: selectedDistricts
+      });
+  
+      setOriginalData(allData || []);
+      setTunedData(response.data?.adjusted_data || []);
+      setModelResults(response.data);  // This now only affects the tuned results
+  
+      if (response.data.feature_importance) {
+        setTunedFeatureImportance(response.data.feature_importance);
+      }
+  
+      setShowReverseTune(true);
+    } catch (error) {
+      console.error("Error performing reverse tuning:", error);
+    } finally {
+      setIsReverseTuning(false);
+    }
   };
+
 
   const handleSaveModel = (modelName: string) => {
     if (savedModels.length >= 10) {
@@ -144,6 +218,7 @@ export default function Home() {
         name: modelName,
         selectedFeatures,
         modelResults,
+        tunedFeatureImportance,
       };
       setSavedModels([...savedModels, newModel]);
     }
@@ -167,7 +242,7 @@ export default function Home() {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Welcome to School Achievement Dashboard!</h1>
+        <h1 className="text-3xl font-bold text-white">Welcome to School Achievement Dashboard!</h1>
         <div>
           <LoadModelButton 
             savedModels={savedModels.map(m => m.name)} 
@@ -178,11 +253,16 @@ export default function Home() {
         </div>
       </div>
 
-      {!showTable && (
-        <div>
+      {/* District Selection - Always visible until Lasso is confirmed */}
+      {!showFeatureSelection && (
+        <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
-            <span className="font-bold">Select District(s):</span>
-            <SelectDistrictBox districts={districts} onSelect={handleDistrictSelect} />
+            <span className="font-bold text-white">Select District(s):</span>
+            <MultiSelectDistrictBox 
+              districts={districts}
+              onSelect={handleDistrictSelect}
+              selectedDistricts={selectedDistricts}
+            />
             <ConfirmButton onClick={handleConfirm} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -195,71 +275,110 @@ export default function Home() {
 
       {showTable && (
         <div className="mb-8">
-          <DataTable data={mockData} columns={['id', 'name', 'district', 'score']} />
+          <DataTable 
+            data={getCurrentPageData()} 
+            columns={tableColumns}
+            currentPage={currentPage}
+            totalRows={totalRows}
+            onPageChange={handlePageChange}
+          />
         </div>
       )}
 
       {showLassoBox && (
-        <LassoBox onConfirm={handleLassoConfirm} onWarning={handleLassoWarning} />
+        <LassoBox onConfirm={handleLassoConfirm} />
       )}
 
-      {isLoading && (
-        <div className="flex justify-center items-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-        </div>
-      )}
-
-      {featureImportance.length > 0 && (
-        <div className="flex mt-8">
-          <div className="w-1/2 pr-4">
-            <h2 className="text-2xl font-bold mb-4">Feature Importance</h2>
-            <FeatureImportanceChart data={featureImportance} />
-          </div>
-          {showReverseTune && (
-            <div className="w-1/2 pl-4">
-              <h2 className="text-2xl font-bold mb-4">Reverse Tune</h2>
-              <div className="mb-4">
-                <span className="font-bold">Select Features to Tune:</span>
-                <SelectFeatureBox 
-                  features={featureImportance.map(f => f.feature)} 
-                  onSelect={handleFeatureSelect} 
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {selectedFeatures.map(({ feature, percentage }) => (
-                  <SelectedFeatureCard 
-                    key={feature} 
-                    feature={feature} 
-                    onRemove={handleFeatureRemove}
-                    onPercentageChange={handleFeaturePercentageChange}
-                  />
-                ))}
-              </div>
-              <ConfirmButton onClick={handleReverseTuneConfirm} />
+      {/* Results Layout */}
+      <div className="flex flex-wrap mt-8 gap-4">
+        {/* Left Side - Original Model Results */}
+        {featureImportance.length > 0 && (
+          <div className="flex-1 min-w-[45%]">
+            <h2 className="text-2xl font-bold mb-4 text-white">Original Model Results</h2>
+            <div className="mb-8">
+              <h3 className="text-xl font-bold mb-4">Feature Importance</h3>
+              <FeatureImportanceChart data={featureImportance} />
             </div>
-          )}
-        </div>
-      )}
+            {lassoResults && (
+              <MetricsBox modelResults={lassoResults} isModelResults={true} />
+            )}
+          </div>
+        )}
 
-      {modelResults && (
+          {/* Right Side - Tuned Results */}
+          {showReverseTune && modelResults && (
+          <div className="flex-1 min-w-[45%]">
+            <h2 className="text-2xl font-bold mb-4 text-white">Tuned Model Results</h2>
+            {tunedFeatureImportance.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-bold mb-4">Feature Importance After Tuning</h3>
+                <FeatureImportanceChart data={tunedFeatureImportance} />
+              </div>
+            )}
+            <MetricsBox modelResults={modelResults} isModelResults={false} />
+          </div>
+        )}
+      </div>
+
+      {/* Feature Selection Section */}
+      {showFeatureSelection && (
         <div className="mt-8">
-          <ReverseTuneBox {...modelResults} />
-          <SaveModelButton onSave={handleSaveModel} />
+          <h2 className="text-2xl font-bold mb-4 text-white">Select Features to Tune for Reverse Tuning:</h2>
+          <MultiSelectFeatureBox 
+            features={availableFeatures}
+            onSelect={handleFeatureSelect}
+            selectedFeatures={selectedFeatures.map(f => f.feature)}
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            {selectedFeatures.map(({ feature, percentage }) => (
+              <SelectedFeatureCard
+                key={feature}
+                feature={feature}
+                onRemove={handleFeatureRemove}
+                onPercentageChange={handleFeaturePercentageChange}
+              />
+            ))}
+          </div>
+          <button
+            className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onClick={handleReverseTuneConfirm}
+            disabled={isReverseTuning}
+          >
+            {isReverseTuning ? 'Performing Reverse Tuning...' : 'Perform Reverse Tuning'}
+          </button>
         </div>
       )}
 
+      {/* Comparison Data Table */}
+      {showReverseTune && modelResults && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4 text-white">Data Comparison After Tuning</h2>
+          <TunedDataTable 
+            tunedData={modelResults?.comparison_data || []}
+            currentPage={currentPage}
+            totalRows={modelResults?.comparison_data?.length || 0}
+            onPageChange={handlePageChange}
+          />
+          
+          <div className="mt-4">
+            <SaveModelButton onSave={handleSaveModel} />
+          </div>
+        </div>
+      )}
+
+      {/* Loading Spinner */}
+      {(isLoading || isReverseTuning) && (
+        <div className="fixed inset-0 flex justify-center items-center bg-gray-900 bg-opacity-50 z-50">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+        </div>
+      )}
+
+      {/* Warning Popup */}
       <WarningPopup 
         isOpen={showWarning}
         onClose={() => setShowWarning(false)}
         onConfirm={handleWarningConfirm}
         message="The number of selected districts might affect model performance. Proceed?"
-      />
-
-      <WarningPopup 
-        isOpen={showLassoCVWarning}
-        onClose={() => setShowLassoCVWarning(false)}
-        onConfirm={handleLassoCVWarningConfirm}
-        message="The entered values for Tolerance or Alpha are outside the recommended range (0.0001 to 1.0). This might affect model performance. Proceed?"
       />
     </div>
   );
