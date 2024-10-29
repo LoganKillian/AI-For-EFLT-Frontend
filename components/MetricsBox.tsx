@@ -69,6 +69,17 @@ const MetricsBox: React.FC<MetricsBoxProps> = ({ modelResults, isModelResults })
     return null;
   };
 
+  const renderMetricExplanations = () => (
+    <div className="mt-4 text-sm text-gray-600">
+      <h4 className="font-semibold">Metric Explanations:</h4>
+      <ul className="list-disc pl-5">
+        <li><strong>Mean Absolute Error (MAE):</strong> Represents the average absolute difference between predicted and actual values. Lower values indicate better predictive accuracy.</li>
+        <li><strong>Mean Squared Error (MSE):</strong> Measures the average squared difference between predicted and actual values. It penalizes larger errors more than MAE. Lower values are preferable.</li>
+        <li><strong>R² Score:</strong> Indicates the proportion of variance in the dependent variable that's predictable from the independent variables. A score closer to 1 indicates a better fit.</li>
+      </ul>
+    </div>
+  );
+
   return (
     <div className="bg-white shadow-md rounded-lg px-6 py-4">
       <h2 className="text-2xl font-bold mb-4">
@@ -100,14 +111,16 @@ const MetricsBox: React.FC<MetricsBoxProps> = ({ modelResults, isModelResults })
             <div className="text-sm text-gray-600">R² Score</div>
             <div className="text-xl font-bold">
               {metrics['R² Score'] != undefined
-              ? metrics['R² Score'].toFixed(4)
-              : 'N/A'}
+                ? metrics['R² Score'].toFixed(4)
+                : 'N/A'}
             </div>
           </div>
         </div>
       </div>
+
+      {renderMetricExplanations()}
     </div>
   );
 };
 
-export default MetricsBox
+export default MetricsBox;

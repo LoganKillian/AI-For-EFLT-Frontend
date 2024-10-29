@@ -78,7 +78,7 @@ export default function Home() {
     if (selectedDistricts.length >= 1 && selectedDistricts.length <= 5) {
       setShowWarning(true);
     } else {
-      // If districts count is 0 or >= 6, proceed directly
+      // If districts count is > 5, proceed directly
       handleWarningConfirm();
     }
   };
@@ -141,7 +141,7 @@ export default function Home() {
   
       const transformedFeatureImportance = feature_importance.map((item: any) => ({
         feature: item.feature,
-        importance: Math.abs(item.Coefficients)
+        importance: item.Coefficients
       }))
       .sort((a: any, b: any) => Math.abs(b.importance) - Math.abs(a.importance));
   
@@ -206,7 +206,6 @@ export default function Home() {
     }
   };
 
-
   const handleSaveModel = (modelName: string) => {
     if (savedModels.length >= 10) {
       alert("You can only save up to 10 models. Please delete a model before saving a new one.");
@@ -263,7 +262,11 @@ export default function Home() {
               onSelect={handleDistrictSelect}
               selectedDistricts={selectedDistricts}
             />
-            <ConfirmButton onClick={handleConfirm} />
+            {/* Disable ConfirmButton if no district is selected */}
+            <ConfirmButton 
+              onClick={handleConfirm} 
+              disabled={selectedDistricts.length === 0} 
+            />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {selectedDistricts.map(district => (
@@ -272,6 +275,7 @@ export default function Home() {
           </div>
         </div>
       )}
+
 
       {showTable && (
         <div className="mb-8">

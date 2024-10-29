@@ -11,9 +11,15 @@ const LassoBox: React.FC<LassoBoxProps> = ({ onConfirm }) => {
   const handleConfirm = () => {
     const toleranceValue = parseFloat(tolerance);
     const alphaValue = parseFloat(alpha);
-    
-    // Proceed with the values regardless of their range
-    onConfirm(toleranceValue, alphaValue);
+
+    if (
+      toleranceValue >= 0.0001 && toleranceValue <= 0.01 &&
+      alphaValue >= 0.0001 && alphaValue <= 0.01
+    ) {
+      onConfirm(toleranceValue, alphaValue);
+    } else {
+      alert("Please enter values within the allowed ranges:\nAlpha: 0.0001 - 0.01\nTolerance: 0.0001 - 0.01");
+    }
   };
 
   return (
@@ -21,7 +27,7 @@ const LassoBox: React.FC<LassoBoxProps> = ({ onConfirm }) => {
       <h2 className="text-2xl font-bold mb-4">Identify feature importance with LassoCV</h2>
       <div className="mb-4">
         <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="tolerance">
-          Tolerance
+          Tolerance (0.0001 - 0.01)
         </label>
         <input 
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -38,7 +44,7 @@ const LassoBox: React.FC<LassoBoxProps> = ({ onConfirm }) => {
       </div>
       <div className="mb-4">
         <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="alpha">
-          Alpha
+          Alpha (0.0001 - 0.01)
         </label>
         <input 
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"

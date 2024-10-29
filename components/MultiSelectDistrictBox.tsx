@@ -15,11 +15,18 @@ const MultiSelectDistrictBox: React.FC<MultiSelectDistrictBoxProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Toggle district selection or select all based on current state
   const handleToggleDistrict = (district: string) => {
     const updatedSelection = selectedDistricts.includes(district)
       ? selectedDistricts.filter(d => d !== district)
       : [...selectedDistricts, district];
     onSelect(updatedSelection);
+  };
+
+  // Handle "Select All" functionality
+  const handleSelectAllToggle = () => {
+    const allSelected = districts.length === selectedDistricts.length;
+    onSelect(allSelected ? [] : [...districts]);
   };
 
   const filteredDistricts = districts.filter(district =>
@@ -53,7 +60,25 @@ const MultiSelectDistrictBox: React.FC<MultiSelectDistrictBoxProps> = ({
               onClick={(e) => e.stopPropagation()}
             />
           </div>
+          
           <div className="max-h-60 overflow-y-auto">
+            {/* "Select All" Option */}
+            <div
+              className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelectAllToggle();
+              }}
+            >
+              <div className="w-5 h-5 border rounded mr-2 flex items-center justify-center">
+                {districts.length === selectedDistricts.length && (
+                  <Check className="w-4 h-4 text-blue-500" />
+                )}
+              </div>
+              Select All
+            </div>
+            
+            {/* District List */}
             {filteredDistricts.map((district) => (
               <div
                 key={district}
