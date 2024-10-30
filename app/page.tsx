@@ -16,6 +16,11 @@ import MultiSelectDistrictBox from '../components/MultiSelectDistrictBox';
 import MultiSelectFeatureBox from '../components/MultiSelectFeatureBox';
 import MetricsBox from '../components/MetricsBox';
 import TunedDataTable from '../components/TunedDataTable';
+import MultiSelectGradeBox from '../components/MultiSelectGradeBox';
+import MultiSelectYearBox from '../components/MultiSelectYearBox';
+import SelectedGradeCard from '../components/SelectedGradeCard';
+import SelectedYearCard from '../components/SelectedYearCard';
+
 
 //import SelectDistrictBox from '../components/SelectDistrictBox';
 //import SelectFeatureBox from '../components/SelectFeatureBox';
@@ -29,6 +34,11 @@ interface SavedModel {
 
 export default function Home() {
   const [selectedDistricts, setSelectedDistricts] = useState<string[]>([]);
+  const [districts, setDistricts] = useState<string[]>([]);
+  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
+  const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [grades, setGrades] = useState<string[]>([]);
+  const [years, setYears] = useState<string[]>([]);
   const [showTable, setShowTable] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const [showLassoBox, setShowLassoBox] = useState(false);
@@ -51,7 +61,6 @@ export default function Home() {
   const [tunedFeatureImportance, setTunedFeatureImportance] = useState<{ feature: string; importance: number }[]>([]);
   const rowsPerPage = 10;
 
-  const [districts, setDistricts] = useState<string[]>([]);
   useEffect(() => {
     const fetchDistricts = async () => {
       try {
@@ -64,12 +73,52 @@ export default function Home() {
     fetchDistricts();
   }, []);
 
+  useEffect(() => {
+    const fetchGrades = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/grades');
+        setGrades(response.data.grades);
+      } catch (error) {
+        console.error('Error fetching grades', error);
+      }
+    };
+    fetchGrades();
+  }, []);
+  
+  useEffect(() => {
+    const fetchYears = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/years');
+        setYears(response.data.years);
+      } catch (error) {
+        console.error('Error fetching years', error);
+      }
+    };
+    fetchYears();
+  }, []);
+
   const handleDistrictSelect = (districts: string[]) => {
     setSelectedDistricts(districts);
   };
 
   const handleDistrictRemove = (district: string) => {
     setSelectedDistricts(selectedDistricts.filter(d => d !== district));
+  };
+
+  const handleGradeSelect = (grades: string[]) => {
+    setSelectedGrades(grades);
+  };
+  
+  const handleGradeRemove = (grade: string) => {
+    setSelectedGrades(selectedGrades.filter(g => g !== grade));
+  };
+  
+  const handleYearSelect = (years: string[]) => {
+    setSelectedYears(years);
+  };
+  
+  const handleYearRemove = (year: string) => {
+    setSelectedYears(selectedYears.filter(y => y !== year));
   };
 
   // TODO: RENAME HANDLECONFIRM AND HANDLEWARNINGCONFIRM TO BETTER REFLECT BEHAVIOR
@@ -89,7 +138,9 @@ export default function Home() {
     try {
       const response = await axios.get('http://localhost:5000/api/filter_data', {
         params: {
-          district_name: selectedDistricts.length > 0 ? selectedDistricts.join(',') : 'all'
+          district_name: selectedDistricts.length > 0 ? selectedDistricts.join(',') : 'all',
+          grade: selectedGrades.length > 0 ? selectedGrades.join(',') : 'all',
+          year: selectedYears.length > 0 ? selectedYears.join(',') : 'all'
         }
       });
       setAllData(response.data.data);
@@ -118,6 +169,8 @@ export default function Home() {
 
   const handleRefresh = () => {
     setSelectedDistricts([]);
+    setSelectedGrades([]);
+    setSelectedYears([]);
     setShowTable(false);
     setShowLassoBox(false);
     setFeatureImportance([]);
@@ -133,7 +186,9 @@ export default function Home() {
       const response = await axios.post('http://localhost:5000/api/run_lasso', {
         tolerance,
         alpha,
-        districts: selectedDistricts
+        districts: selectedDistricts,
+        grades: selectedGrades,
+        years: selectedYears,
       });
   
       const { metrics, feature_importance, overall_achievement_score } = response.data;
@@ -187,7 +242,9 @@ export default function Home() {
     try {
       const response = await axios.post('http://localhost:5000/api/adjust_features', {
         features: Object.fromEntries(selectedFeatures.map(f => [f.feature, f.percentage])),
-        districts: selectedDistricts
+        districts: selectedDistricts,
+        grades: selectedGrades,
+        years: selectedYears,
       });
   
       setOriginalData(allData || []);
@@ -252,25 +309,76 @@ export default function Home() {
         </div>
       </div>
 
-      {/* District Selection - Always visible until Lasso is confirmed */}
+      {/* District, Grade, and Year Selection - Always visible until Lasso is confirmed */}
       {!showFeatureSelection && (
         <div className="mb-8">
-          <div className="flex items-center space-x-4 mb-4">
-            <span className="font-bold text-white">Select District(s):</span>
-            <MultiSelectDistrictBox 
-              districts={districts}
-              onSelect={handleDistrictSelect}
-              selectedDistricts={selectedDistricts}
-            />
-            {/* Disable ConfirmButton if no district is selected */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+            {/* District Selection */}
+            <div>
+              <span className="font-bold text-white block mb-2">Select District(s):</span>
+              <MultiSelectDistrictBox 
+                districts={districts}
+                onSelect={handleDistrictSelect}
+                selectedDistricts={selectedDistricts}
+              />
+            </div>
+
+            {/* Grade Selection */}
+            <div>
+              <span className="font-bold text-white block mb-2">Select Grade(s):</span>
+              <MultiSelectGradeBox 
+                grades={grades}
+                onSelect={handleGradeSelect}
+                selectedGrades={selectedGrades}
+              />
+            </div>
+
+            {/* Year Selection */}
+            <div>
+              <span className="font-bold text-white block mb-2">Select Year(s):</span>
+              <MultiSelectYearBox 
+                years={years}
+                onSelect={handleYearSelect}
+                selectedYears={selectedYears}
+              />
+            </div>
+          </div>
+
+          {/* Confirm Button - Centered below selection boxes */}
+          <div className="flex justify-center mb-6">
             <ConfirmButton 
               onClick={handleConfirm} 
-              disabled={selectedDistricts.length === 0} 
+              disabled={selectedDistricts.length === 0 && selectedGrades.length === 0 && selectedYears.length === 0} 
             />
           </div>
+
+          {/* Selected Items Display */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Selected Districts */}
             {selectedDistricts.map(district => (
-              <SelectedDistrictCard key={district} district={district} onRemove={handleDistrictRemove} />
+              <SelectedDistrictCard 
+                key={`district-${district}`} 
+                district={district} 
+                onRemove={handleDistrictRemove} 
+              />
+            ))}
+            
+            {/* Selected Grades */}
+            {selectedGrades.map(grade => (
+              <SelectedGradeCard 
+                key={`grade-${grade}`} 
+                grade={grade} 
+                onRemove={handleGradeRemove} 
+              />
+            ))}
+            
+            {/* Selected Years */}
+            {selectedYears.map(year => (
+              <SelectedYearCard 
+                key={`year-${year}`} 
+                year={year} 
+                onRemove={handleYearRemove} 
+              />
             ))}
           </div>
         </div>
