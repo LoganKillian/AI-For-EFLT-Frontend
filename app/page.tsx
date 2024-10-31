@@ -177,6 +177,7 @@ export default function Home() {
     setSelectedFeatures([]);
     setShowReverseTune(false);
     setModelResults(null);
+    setShowFeatureSelection(false);
   };
 
   const handleLassoConfirm = async (tolerance: number, alpha: number) => {
