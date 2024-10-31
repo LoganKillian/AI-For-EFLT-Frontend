@@ -204,7 +204,7 @@ export default function Home() {
       setLassoResults({ metrics, overall_achievement_score });  // Store Lasso results separately
       setModelResults({ metrics, overall_achievement_score });  // Keep this for initial display
       
-      const featuresResponse = await axios.get('http://localhost:5000/api/get_features');
+      const featuresResponse = await axios.get('http://localhost:5000/api/get_tunable_features');
       setAvailableFeatures(featuresResponse.data);
       
       setShowLassoBox(false);
