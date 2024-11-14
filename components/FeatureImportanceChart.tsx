@@ -12,6 +12,7 @@ interface FeatureImportanceData {
 
 interface FeatureImportanceChartProps {
   data: FeatureImportanceData[];
+  featureDescriptions: { [key: string]: string };
 }
 
 const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data }) => {
@@ -50,6 +51,15 @@ const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data })
       title: {
         display: true,
         text: 'Feature Importance',
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const feature = context.label || ""; 
+            const description = featureDescriptions?.[feature] ?? 'No description available'; 
+            return `${feature}: ${description}`; 
+          },
+        },
       },
     },
     scales: {
