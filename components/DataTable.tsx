@@ -1,4 +1,5 @@
 import React from 'react';
+import { Tooltip } from 'react-tooltip';
 
 interface DataTableProps {
   data: any[];
@@ -28,7 +29,8 @@ const DataTable: React.FC<DataTableProps> = ({
               {columns.map((column, index) => (
                 <th 
                   key={index} 
-                  title={featureDescriptions[column] || ""} 
+                  data-tooltip-id="table-tooltip" 
+                  data-tooltip-content={featureDescriptions[column] || ""} 
                   className={`px-2 py-2 border-b-2 border-gray-300 text-left text-xs leading-4 text-gray-700 uppercase tracking-wider ${
                     index < 6 ? 'font-bold' : ''
                   }`}
@@ -56,6 +58,10 @@ const DataTable: React.FC<DataTableProps> = ({
           </tbody>
         </table>
       </div>
+      
+      {/* Rendering tooltips using tooltip components */}
+      <Tooltip id="table-tooltip" place="top" style={{ backgroundColor: "#3b82f6", color: "white" }} />
+      
       <div className="flex justify-between items-center mt-4 px-2 py-2 bg-white">
         <button 
           onClick={() => onPageChange(currentPage - 1)}
