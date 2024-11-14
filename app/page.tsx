@@ -425,7 +425,7 @@ export default function Home() {
             <h2 className="text-2xl font-bold mb-4 text-white">Original Model Results</h2>
             <div className="mb-8">
               <h3 className="text-xl font-bold mb-4">Feature Importance</h3>
-              <FeatureImportanceChart data={featureImportance} />
+              <FeatureImportanceChart data={featureImportance} featureDescriptions={featureDescriptions} />
             </div>
             {lassoResults && (
               <MetricsBox modelResults={lassoResults} isModelResults={true} />
@@ -440,7 +440,7 @@ export default function Home() {
             {tunedFeatureImportance.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-xl font-bold mb-4">Feature Importance After Tuning</h3>
-                <FeatureImportanceChart data={tunedFeatureImportance} />
+                <FeatureImportanceChart data={tunedFeatureImportance} featureDescriptions={featureDescriptions} />
               </div>
             )}
             <MetricsBox modelResults={modelResults} isModelResults={false} />
