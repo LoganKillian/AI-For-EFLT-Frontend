@@ -13,6 +13,7 @@ interface FeatureImportanceData {
 interface FeatureImportanceChartProps {
   data: FeatureImportanceData[];
   featureDescriptions: { [key: string]: string }; 
+}
 
 const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data, featureDescriptions }) => {
   if (!data || data.length === 0) {
@@ -85,3 +86,4 @@ const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data, f
 };
 
 export default FeatureImportanceChart;
+
