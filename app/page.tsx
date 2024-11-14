@@ -60,8 +60,22 @@ export default function Home() {
   const [tunedData, setTunedData] = useState<any[]>([]);
   const [tunedFeatureImportance, setTunedFeatureImportance] = useState<{ feature: string; importance: number }[]>([]);
   const rowsPerPage = 10;
+  const [featureDescriptions, setFeatureDescriptions] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
+  const fetchFeatureDescriptions = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/get_feature_descriptions');
+      setFeatureDescriptions(response.data);
+    } catch (error) {
+      console.error('Error fetching feature descriptions:', error);
+    }
+  };
+  fetchFeatureDescriptions();
+}, []);
+  
+  useEffect(() => {
+    
     const fetchDistricts = async () => {
       try {
         const response = await axios.get('http://localhost:5000/api/districts');
@@ -394,6 +408,7 @@ export default function Home() {
             currentPage={currentPage}
             totalRows={totalRows}
             onPageChange={handlePageChange}
+            featureDescriptions={featureDescriptions} 
           />
         </div>
       )}
