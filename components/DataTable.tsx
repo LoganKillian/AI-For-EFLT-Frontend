@@ -6,12 +6,19 @@ interface DataTableProps {
   currentPage: number;
   totalRows: number;
   onPageChange: (page: number) => void;
+  featureDescriptions?: { [key: string]: string }; 
 }
 
-const DataTable: React.FC<DataTableProps> = ({ data, columns, currentPage, totalRows, onPageChange }) => {
+const DataTable: React.FC<DataTableProps> = ({
+  data,
+  columns,
+  currentPage,
+  totalRows,
+  onPageChange,
+  featureDescriptions = {}, 
+}) => {
   const rowsPerPage = 10;
   const totalPages = Math.ceil(totalRows / rowsPerPage);
-
   return (
     <div className="flex flex-col">
       <div className="overflow-x-auto">
@@ -21,6 +28,7 @@ const DataTable: React.FC<DataTableProps> = ({ data, columns, currentPage, total
               {columns.map((column, index) => (
                 <th 
                   key={index} 
+                  title={featureDescriptions[column] || ""} 
                   className={`px-2 py-2 border-b-2 border-gray-300 text-left text-xs leading-4 text-gray-700 uppercase tracking-wider ${
                     index < 6 ? 'font-bold' : ''
                   }`}
