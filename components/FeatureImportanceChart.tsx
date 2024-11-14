@@ -23,7 +23,7 @@ const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data, f
   // Normalize the data structure to handle both Lasso and reverse tuning responses
   const normalizedData = data.map(item => ({
     feature: item.feature,
-    importance: item.importance,
+    importance: item.importance
   }));
 
   // Sort by importance in descending order
@@ -56,8 +56,13 @@ const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data, f
         callbacks: {
           label: function (context) {
             const feature = context.label || ""; 
+            const importance = (context.raw as number).toFixed(3);
             const description = featureDescriptions?.[feature] ?? 'No description available'; 
-            return `${feature}: ${description}`; 
+            
+            return [
+              `Feature Importance: ${importance}`,  
+              `${feature}: ${description}`,  
+            ];
           },
         },
       },
@@ -78,11 +83,7 @@ const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data, f
     },
   };
 
-  return (
-    <div style={{ height: '800px' }}>
-      <Bar data={chartData} options={options} />
-    </div>
-  );
+  return <div style={{ height: '800px' }}><Bar data={chartData} options={options} /></div>;
 };
 
 export default FeatureImportanceChart;
