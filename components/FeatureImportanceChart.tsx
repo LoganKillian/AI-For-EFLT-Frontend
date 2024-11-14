@@ -12,10 +12,9 @@ interface FeatureImportanceData {
 
 interface FeatureImportanceChartProps {
   data: FeatureImportanceData[];
-  featureDescriptions: { [key: string]: string };
-}
+  featureDescriptions: { [key: string]: string }; 
 
-const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data }) => {
+const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data, featureDescriptions }) => {
   if (!data || data.length === 0) {
     return <div>No feature importance data available</div>;
   }
@@ -23,11 +22,11 @@ const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data })
   // Normalize the data structure to handle both Lasso and reverse tuning responses
   const normalizedData = data.map(item => ({
     feature: item.feature,
-    importance: item.importance //|| item.Coefficients // Use importance if available, otherwise use absolute Coefficients
+    importance: item.importance,
   }));
 
   // Sort by importance in descending order
-  const sortedData = normalizedData.sort((a, b) => b.importance - a.importance);
+  const sortedData = normalizedData.sort((a, b) => (b.importance || 0) - (a.importance || 0));
 
   const chartData = {
     labels: sortedData.map(item => item.feature),
@@ -78,7 +77,11 @@ const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data })
     },
   };
 
-  return <div style={{ height: '800px' }}><Bar data={chartData} options={options} /></div>;
+  return (
+    <div style={{ height: '800px' }}>
+      <Bar data={chartData} options={options} />
+    </div>
+  );
 };
 
 export default FeatureImportanceChart;
