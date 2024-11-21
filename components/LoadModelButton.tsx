@@ -4,18 +4,22 @@ interface LoadModelButtonProps {
   savedModels: string[];
   onLoad: (modelName: string) => void;
   onDelete: (modelName: string) => void;
-  onCompare: (model1: string, model2: string) => void; 
 }
 
-const LoadModelButton: React.FC<LoadModelButtonProps> = ({ savedModels, onLoad, onDelete, onCompare }) => {
+const LoadModelButton: React.FC<LoadModelButtonProps> = ({
+  savedModels,
+  onLoad,
+  onDelete,
+}) => {
   const [showPopup, setShowPopup] = useState(false);
   const [selectedModel1, setSelectedModel1] = useState('');
   const [selectedModel2, setSelectedModel2] = useState('');
-  const [isComparing, setIsComparing] = useState(false); 
+  const [isComparing, setIsComparing] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false); 
 
   return (
     <>
-      <button 
+      <button
         onClick={() => setShowPopup(true)}
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
       >
@@ -28,41 +32,45 @@ const LoadModelButton: React.FC<LoadModelButtonProps> = ({ savedModels, onLoad, 
             <div className="fixed inset-0 transition-opacity" aria-hidden="true">
               <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
+              &#8203;
+            </span>
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                     <h3 className="text-lg leading-6 font-medium text-gray-900">
-                      {isComparing ? "Select Models to Compare" : "Load Model"}
+                      {isComparing ? 'Select Models to Compare' : 'Load Model'}
                     </h3>
                     <div className="mt-2">
                       {isComparing ? (
-                        
                         <div className="space-y-4">
-                          <select 
-                            value={selectedModel1} 
-                            onChange={(e) => setSelectedModel1(e.target.value)} 
+                          <select
+                            value={selectedModel1}
+                            onChange={(e) => setSelectedModel1(e.target.value)}
                             className="w-full border border-gray-300 p-2 rounded"
                           >
                             <option value="">Select Model 1</option>
                             {savedModels.map((model) => (
-                              <option key={model} value={model}>{model}</option>
+                              <option key={model} value={model}>
+                                {model}
+                              </option>
                             ))}
                           </select>
-                          <select 
-                            value={selectedModel2} 
-                            onChange={(e) => setSelectedModel2(e.target.value)} 
+                          <select
+                            value={selectedModel2}
+                            onChange={(e) => setSelectedModel2(e.target.value)}
                             className="w-full border border-gray-300 p-2 rounded"
                           >
                             <option value="">Select Model 2</option>
                             {savedModels.map((model) => (
-                              <option key={model} value={model}>{model}</option>
+                              <option key={model} value={model}>
+                                {model}
+                              </option>
                             ))}
                           </select>
                         </div>
                       ) : (
-                        
                         savedModels.map((model) => (
                           <div key={model} className="flex justify-between items-center mb-2">
                             <button
@@ -89,10 +97,9 @@ const LoadModelButton: React.FC<LoadModelButtonProps> = ({ savedModels, onLoad, 
               </div>
               <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                 {isComparing ? (
-                  
-                  <button 
+                  <button
                     onClick={() => {
-                      onCompare(selectedModel1, selectedModel2);
+                      setShowComingSoon(true); 
                       setShowPopup(false);
                       setSelectedModel1('');
                       setSelectedModel2('');
@@ -104,15 +111,14 @@ const LoadModelButton: React.FC<LoadModelButtonProps> = ({ savedModels, onLoad, 
                     Compare
                   </button>
                 ) : (
-                  
-                  <button 
+                  <button
                     onClick={() => setIsComparing(true)}
                     className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-gray-100 text-base font-medium text-gray-700 hover:bg-gray-200 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
                   >
                     Compare Models
                   </button>
                 )}
-                <button 
+                <button
                   onClick={() => {
                     setShowPopup(false);
                     setIsComparing(false);
@@ -125,6 +131,22 @@ const LoadModelButton: React.FC<LoadModelButtonProps> = ({ savedModels, onLoad, 
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      
+      {showComingSoon && (
+        <div className="fixed z-10 inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <h2 className="text-2xl font-bold mb-4">Coming Soon!</h2>
+            <p className="text-gray-700 mb-4">The compare models feature is under development.</p>
+            <button
+              onClick={() => setShowComingSoon(false)}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
