@@ -4,9 +4,15 @@ interface SelectedFeatureCardProps {
   feature: string;
   onRemove: (feature: string) => void;
   onPercentageChange: (feature: string, percentage: number) => void;
+  featureDescriptions?: { [key: string]: string }; 
 }
 
-const SelectedFeatureCard: React.FC<SelectedFeatureCardProps> = ({ feature, onRemove, onPercentageChange }) => {
+const SelectedFeatureCard: React.FC<SelectedFeatureCardProps> = ({ 
+  feature, 
+  onRemove, 
+  onPercentageChange, 
+  featureDescriptions = {} 
+}) => {
   const [percentage, setPercentage] = useState('');
 
   const handlePercentageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -15,10 +21,15 @@ const SelectedFeatureCard: React.FC<SelectedFeatureCardProps> = ({ feature, onRe
     onPercentageChange(feature, parseFloat(value) || 0);
   };
 
+  const description = featureDescriptions[feature] || 'No description available'; 
+
   return (
     <div className="bg-white shadow-md rounded px-4 py-3 mb-4 flex flex-col relative">
-      <span className="block text-gray-700 text-sm font-bold mb-2">{feature}</span>
       <div className="flex items-center">
+        <span className="block text-gray-700 text-sm font-bold">{feature}</span>
+        <span className="ml-2 text-gray-500 text-xs italic">({description})</span> 
+      </div>
+      <div className="flex items-center mt-2">
         <input
           type="number"
           value={percentage}
