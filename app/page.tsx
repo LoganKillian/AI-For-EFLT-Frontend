@@ -60,6 +60,8 @@ export default function Home() {
   const [tunedData, setTunedData] = useState<any[]>([]);
   const [tunedFeatureImportance, setTunedFeatureImportance] = useState<{ feature: string; importance: number }[]>([]);
   const rowsPerPage = 10;
+  const cardsPerPage = 6;
+  const [cardPage, setCardPage] = useState(1); 
   const [featureDescriptions, setFeatureDescriptions] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
@@ -180,7 +182,18 @@ export default function Home() {
     return allData.slice(startIndex, endIndex);
   };
 
-
+  const combinedCards = [
+    ...selectedDistricts.map((district) => ({ type: 'district', value: district })),
+    ...selectedGrades.map((grade) => ({ type: 'grade', value: grade })),
+    ...selectedYears.map((year) => ({ type: 'year', value: year })),
+  ];
+  
+  const getCurrentCombinedData = (data: { type: string; value: string }[]) => {
+    const startIndex = (cardPage - 1) * cardsPerPage;
+    const endIndex = startIndex + cardsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+  
   const handleRefresh = () => {
     setSelectedDistricts([]);
     setSelectedGrades([]);
@@ -369,34 +382,56 @@ export default function Home() {
 
           {/* Selected Items Display */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Selected Districts */}
-            {selectedDistricts.map(district => (
-              <SelectedDistrictCard 
-                key={`district-${district}`} 
-                district={district} 
-                onRemove={handleDistrictRemove} 
-              />
-            ))}
-            
-            {/* Selected Grades */}
-            {selectedGrades.map(grade => (
-              <SelectedGradeCard 
-                key={`grade-${grade}`} 
-                grade={grade} 
-                onRemove={handleGradeRemove} 
-              />
-            ))}
-            
-            {/* Selected Years */}
-            {selectedYears.map(year => (
-              <SelectedYearCard 
-                key={`year-${year}`} 
-                year={year} 
-                onRemove={handleYearRemove} 
-              />
-            ))}
-          </div>
-        </div>
+  {getCurrentCombinedData(combinedCards).map((item, index) => {
+    if (item.type === 'district') {
+      return (
+        <SelectedDistrictCard
+          key={`district-${item.value}-${index}`}
+          district={item.value}
+          onRemove={handleDistrictRemove}
+        />
+      );
+    } else if (item.type === 'grade') {
+      return (
+        <SelectedGradeCard
+          key={`grade-${item.value}-${index}`}
+          grade={item.value}
+          onRemove={handleGradeRemove}
+        />
+      );
+    } else if (item.type === 'year') {
+      return (
+        <SelectedYearCard
+          key={`year-${item.value}-${index}`}
+          year={item.value}
+          onRemove={handleYearRemove}
+        />
+      );
+    }
+    return null;
+  })}
+  </div>
+        
+<div className="flex justify-center items-center mt-4">
+  <button 
+    onClick={() => setCardPage((prev) => Math.max(prev - 1, 1))}
+    disabled={cardPage === 1}
+    className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
+  >
+    Previous
+  </button>
+  <span className="mx-4 text-white">
+    Page {cardPage} of {Math.ceil(combinedCards.length / cardsPerPage)}
+  </span>
+  <button 
+    onClick={() => setCardPage((prev) => Math.min(prev + 1, Math.ceil(combinedCards.length / cardsPerPage)))}
+    disabled={cardPage === Math.ceil(combinedCards.length / cardsPerPage)}
+    className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
+  >
+    Next
+  </button>
+    </div>
+      </div>     
       )}
 
 
@@ -456,6 +491,7 @@ export default function Home() {
             features={availableFeatures}
             onSelect={handleFeatureSelect}
             selectedFeatures={selectedFeatures.map(f => f.feature)}
+            featureDescriptions={featureDescriptions || {}}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             {selectedFeatures.map(({ feature, percentage }) => (
@@ -464,9 +500,11 @@ export default function Home() {
                 feature={feature}
                 onRemove={handleFeatureRemove}
                 onPercentageChange={handleFeaturePercentageChange}
+                featureDescriptions={featureDescriptions}
               />
             ))}
           </div>
+          
           <button
             className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             onClick={handleReverseTuneConfirm}
