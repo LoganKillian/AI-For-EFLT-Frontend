@@ -16,10 +16,10 @@ import MultiSelectDistrictBox from '../components/MultiSelectDistrictBox';
 import MultiSelectFeatureBox from '../components/MultiSelectFeatureBox';
 import MetricsBox from '../components/MetricsBox';
 import TunedDataTable from '../components/TunedDataTable';
-import MultiSelectGradeBox from '../components/MultiSelectGradeBox';
 import MultiSelectYearBox from '../components/MultiSelectYearBox';
-import SelectedGradeCard from '../components/SelectedGradeCard';
 import SelectedYearCard from '../components/SelectedYearCard';
+import MultiSelectLocaleBox from '../components/MultiSelectLocaleBox';
+import SelectedLocaleCard from '../components/SelectedLocaleCard';
 
 
 //import SelectDistrictBox from '../components/SelectDistrictBox';
@@ -35,9 +35,9 @@ interface SavedModel {
 export default function Home() {
   const [selectedDistricts, setSelectedDistricts] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
-  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
+  const [selectedLocales, setSelectedLocales] = useState<string[]>([]);
+  const [locales, setLocales] = useState<string[]>([]);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
-  const [grades, setGrades] = useState<string[]>([]);
   const [years, setYears] = useState<string[]>([]);
   const [showTable, setShowTable] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
@@ -81,6 +81,7 @@ export default function Home() {
     const fetchDistricts = async () => {
       try {
         const response = await axios.get('http://localhost:5000/api/districts');
+        console.log(response)
         setDistricts(response.data.districts);
       } catch (error) {
         console.error('Error fetching districts', error);
@@ -90,15 +91,16 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const fetchGrades = async () => {
+    const fetchLocales = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/grades');
-        setGrades(response.data.grades);
+        const response = await axios.get('http://localhost:5000/api/locales');
+        console.log(response)
+        setLocales(response.data.locales);
       } catch (error) {
-        console.error('Error fetching grades', error);
+        console.error('Error fetching locales', error);
       }
     };
-    fetchGrades();
+    fetchLocales();
   }, []);
   
   useEffect(() => {
@@ -121,14 +123,14 @@ export default function Home() {
     setSelectedDistricts(selectedDistricts.filter(d => d !== district));
   };
 
-  const handleGradeSelect = (grades: string[]) => {
-    setSelectedGrades(grades);
+  const handleLocaleSelect = (locales: string[]) => {
+    setSelectedLocales(locales);
   };
-  
-  const handleGradeRemove = (grade: string) => {
-    setSelectedGrades(selectedGrades.filter(g => g !== grade));
+
+  const handleLocaleRemove = (locale: string) => {
+    setSelectedLocales(selectedLocales.filter(l => l !== locale));
   };
-  
+
   const handleYearSelect = (years: string[]) => {
     setSelectedYears(years);
   };
@@ -155,7 +157,7 @@ export default function Home() {
       const response = await axios.get('http://localhost:5000/api/filter_data', {
         params: {
           district_name: selectedDistricts.length > 0 ? selectedDistricts.join(',') : 'all',
-          grade: selectedGrades.length > 0 ? selectedGrades.join(',') : 'all',
+          locale: selectedLocales.length > 0 ? selectedLocales.join(',') : 'all',
           year: selectedYears.length > 0 ? selectedYears.join(',') : 'all'
         }
       });
@@ -184,7 +186,7 @@ export default function Home() {
 
   const combinedCards = [
     ...selectedDistricts.map((district) => ({ type: 'district', value: district })),
-    ...selectedGrades.map((grade) => ({ type: 'grade', value: grade })),
+    ...selectedLocales.map((locale) => ({ type: 'locale', value: locale })),
     ...selectedYears.map((year) => ({ type: 'year', value: year })),
   ];
   
@@ -196,7 +198,7 @@ export default function Home() {
   
   const handleRefresh = () => {
     setSelectedDistricts([]);
-    setSelectedGrades([]);
+    setSelectedLocales([]);
     setSelectedYears([]);
     setShowTable(false);
     setShowLassoBox(false);
@@ -215,7 +217,7 @@ export default function Home() {
         tolerance,
         alpha,
         districts: selectedDistricts,
-        grades: selectedGrades,
+        locales: selectedLocales,
         years: selectedYears,
       });
   
@@ -271,7 +273,7 @@ export default function Home() {
       const response = await axios.post('http://localhost:5000/api/adjust_features', {
         features: Object.fromEntries(selectedFeatures.map(f => [f.feature, f.percentage])),
         districts: selectedDistricts,
-        grades: selectedGrades,
+        locales: selectedLocales,
         years: selectedYears,
       });
   
@@ -351,13 +353,13 @@ export default function Home() {
               />
             </div>
 
-            {/* Grade Selection */}
+            {/* Locale Selection */}
             <div>
-              <span className="font-bold text-white block mb-2">Select Grade(s):</span>
-              <MultiSelectGradeBox 
-                grades={grades}
-                onSelect={handleGradeSelect}
-                selectedGrades={selectedGrades}
+              <span className="font-bold text-white block mb-2">Select Locale(s):</span>
+              <MultiSelectLocaleBox 
+                locales={locales}
+                onSelect={handleLocaleSelect}
+                selectedLocales={selectedLocales}
               />
             </div>
 
@@ -376,7 +378,7 @@ export default function Home() {
           <div className="flex justify-center mb-6">
             <ConfirmButton 
               onClick={handleConfirm} 
-              disabled={selectedDistricts.length === 0 && selectedGrades.length === 0 && selectedYears.length === 0} 
+              disabled={selectedDistricts.length === 0 && selectedLocales.length === 0 && selectedYears.length === 0} 
             />
           </div>
 
@@ -391,12 +393,12 @@ export default function Home() {
           onRemove={handleDistrictRemove}
         />
       );
-    } else if (item.type === 'grade') {
+    } else if (item.type === 'locale') {
       return (
-        <SelectedGradeCard
-          key={`grade-${item.value}-${index}`}
-          grade={item.value}
-          onRemove={handleGradeRemove}
+        <SelectedLocaleCard
+          key={`locale-${item.value}-${index}`}
+          locale={item.value}
+          onRemove={handleLocaleRemove}
         />
       );
     } else if (item.type === 'year') {

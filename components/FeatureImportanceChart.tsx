@@ -4,6 +4,17 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
+// Adjustable array to determine which features to hide in chart
+const FEATURES_TO_IGNORE = [
+  'perasn',
+  'perblk',
+  'perhsp',
+  'perind',
+  'perwht',
+  'perecd',
+  'perell'
+];
+
 interface FeatureImportanceData {
   feature: string;
   importance?: number;
@@ -20,11 +31,13 @@ const FeatureImportanceChart: React.FC<FeatureImportanceChartProps> = ({ data, f
     return <div>No feature importance data available</div>;
   }
 
-  // Normalize the data structure to handle both Lasso and reverse tuning responses
-  const normalizedData = data.map(item => ({
-    feature: item.feature,
-    importance: item.importance
-  }));
+  // Filter out ignored features and normalize the data
+  const normalizedData = data
+    .filter(item => !FEATURES_TO_IGNORE.includes(item.feature))
+    .map(item => ({
+      feature: item.feature,
+      importance: item.importance
+    }));
 
   // Sort by importance in descending order
   const sortedData = normalizedData.sort((a, b) => (b.importance || 0) - (a.importance || 0));
