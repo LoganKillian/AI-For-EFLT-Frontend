@@ -412,27 +412,27 @@ export default function Home() {
     }
     return null;
   })}
-  </div>
-        
+</div>
+
 <div className="flex justify-center items-center mt-4">
   <button 
     onClick={() => setCardPage((prev) => Math.max(prev - 1, 1))}
-    disabled={cardPage === 1}
+    disabled={cardPage === 1 || combinedCards.length === 0} 
     className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
   >
     Previous
   </button>
   <span className="mx-4 text-white">
-    Page {cardPage} of {Math.ceil(combinedCards.length / cardsPerPage)}
+    Page {combinedCards.length === 0 ? 0 : cardPage} of {combinedCards.length === 0 ? 0 : Math.ceil(combinedCards.length / cardsPerPage)}
   </span>
   <button 
     onClick={() => setCardPage((prev) => Math.min(prev + 1, Math.ceil(combinedCards.length / cardsPerPage)))}
-    disabled={cardPage === Math.ceil(combinedCards.length / cardsPerPage)}
+    disabled={cardPage === Math.ceil(combinedCards.length / cardsPerPage) || combinedCards.length === 0}
     className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
   >
     Next
   </button>
-    </div>
+</div>
       </div>     
       )}
 
